@@ -6,10 +6,13 @@ import com.jackson.vue.jwt_backend_integrate.model.UserEntity;
 import com.jackson.vue.jwt_backend_integrate.repository.UserRepository;
 import com.jackson.vue.jwt_backend_integrate.service.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -21,18 +24,23 @@ public class LoginController {
     private final UserRepository userRepo;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
-        System.out.println("reach login");
-        authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-        );
-
-        UserEntity user = userRepo.findByUserName(authRequest.getUsername())
-                .orElseThrow();
-
-        String jwt = jwtService.generateToken(user.getUserName());
-        System.out.println("reach jwt");
-        return ResponseEntity.ok(new AuthResponse(jwt));
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        System.out.println("Login endpoint hit");
+        try {
+            System.out.println("user name " + request.getUsername());
+            System.out.println("password" + request.getPassword());
+            authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(), request.getPassword()
+                    )
+            );
+            String token = jwtService.generateToken(request.getUsername());
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (Exception e) {
+            System.out.println("Authentication failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
     }
+
 
 }

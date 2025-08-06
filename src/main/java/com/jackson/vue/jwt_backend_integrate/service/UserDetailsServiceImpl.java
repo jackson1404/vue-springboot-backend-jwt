@@ -16,11 +16,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUserName(username)
+        return userRepository.findByUsername(username)
                 .map(user -> User.builder()
-                        .username(user.getUserName())
+                        .username(user.getUsername())
                         .password(user.getPassword())
-                        .roles(user.getRole()) // must match your database column (e.g., "USER")
+                        .roles(user.getRole())
                         .build())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }

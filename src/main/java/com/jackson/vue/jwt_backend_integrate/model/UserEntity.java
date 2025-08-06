@@ -18,7 +18,7 @@ public class UserEntity {
     @GeneratedValue
     private Long id;
 
-    private String userName;
+    private String username;
     private String password;
     private String role;
 
