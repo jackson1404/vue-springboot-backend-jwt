@@ -23,7 +23,16 @@ public class JwtService {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.MINUTES)))
+                .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateRefreshToken(String username){
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
                 .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
