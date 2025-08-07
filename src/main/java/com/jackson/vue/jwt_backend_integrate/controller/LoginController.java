@@ -5,6 +5,8 @@ import com.jackson.vue.jwt_backend_integrate.dto.AuthResponse;
 import com.jackson.vue.jwt_backend_integrate.model.UserEntity;
 import com.jackson.vue.jwt_backend_integrate.repository.UserRepository;
 import com.jackson.vue.jwt_backend_integrate.service.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
@@ -25,7 +27,7 @@ public class LoginController {
     private final UserRepository userRepo;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpServletResponse response) {
         System.out.println("Login endpoint hit");
         try {
             authManager.authenticate(
@@ -35,7 +37,16 @@ public class LoginController {
             );
             String accessToken = jwtService.generateToken(request.getUsername());
             String refreshToken = jwtService.generateRefreshToken(request.getUsername());
-            return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken));
+
+            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setSecure(true);
+            refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+
+            response.addCookie(refreshTokenCookie);
+
+            return ResponseEntity.ok(new AuthResponse(accessToken));
         } catch (Exception e) {
             System.out.println("Authentication failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
