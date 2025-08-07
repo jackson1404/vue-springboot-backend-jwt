@@ -6,6 +6,7 @@ import com.jackson.vue.jwt_backend_integrate.model.UserEntity;
 import com.jackson.vue.jwt_backend_integrate.repository.UserRepository;
 import com.jackson.vue.jwt_backend_integrate.service.JwtService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
@@ -15,6 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.Map;
 
 @RestController
@@ -46,7 +48,7 @@ public class LoginController {
 
             response.addCookie(refreshTokenCookie);
 
-            return ResponseEntity.ok(new AuthResponse(accessToken));
+            return ResponseEntity.ok(Map.of("accessToken", accessToken));
         } catch (Exception e) {
             System.out.println("Authentication failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
@@ -54,18 +56,19 @@ public class LoginController {
     }
 
     @PostMapping("/refreshNewToken")
-    public ResponseEntity<?> getNewToken(@RequestBody Map<String, String> request){
+    public ResponseEntity<?> getNewToken(HttpServletRequest request) throws Exception {
 
-        String refreshToken = request.get("refreshToken");
+        Cookie[] cookies = request.getCookies();
+        String refreshToken = Arrays.stream(cookies)
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElseThrow(() -> new Exception("No refresh token"));
+
 
         String username = jwtService.extractUsername(refreshToken);
-        if (username == null || jwtService.isExpired(refreshToken)){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        String newAccessToken = jwtService.generateToken(username);
 
-        UserEntity user = userRepo.findByUsername(username).orElseThrow();
-
-        String newAccessToken = jwtService.generateToken(user.getUsername());
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
     }
