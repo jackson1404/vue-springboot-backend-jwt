@@ -27,15 +27,14 @@ public class LoginController {
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         System.out.println("Login endpoint hit");
         try {
-            System.out.println("user name " + request.getUsername());
-            System.out.println("password" + request.getPassword());
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(), request.getPassword()
                     )
             );
-            String token = jwtService.generateToken(request.getUsername());
-            return ResponseEntity.ok(Map.of("token", token));
+            String accessToken = jwtService.generateToken(request.getUsername());
+            String refreshToken = jwtService.generateRefreshToken(request.getUsername());
+            return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken));
         } catch (Exception e) {
             System.out.println("Authentication failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
