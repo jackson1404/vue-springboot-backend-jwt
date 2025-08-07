@@ -51,7 +51,7 @@ public class JwtService {
         return username.equals(userDetails.getUsername()) && !isExpired(token);
     }
 
-    private boolean isExpired(String token) {
+    public boolean isExpired(String token) {
         Date expiration = Jwts.parserBuilder()
                 .setSigningKey(jwtSecret.getBytes())
                 .build()

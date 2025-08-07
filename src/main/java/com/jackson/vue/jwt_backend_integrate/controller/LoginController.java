@@ -6,6 +6,7 @@ import com.jackson.vue.jwt_backend_integrate.model.UserEntity;
 import com.jackson.vue.jwt_backend_integrate.repository.UserRepository;
 import com.jackson.vue.jwt_backend_integrate.service.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,6 +40,23 @@ public class LoginController {
             System.out.println("Authentication failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
+    }
+
+    @PostMapping("/refreshNewToken")
+    public ResponseEntity<?> getNewToken(@RequestBody Map<String, String> request){
+
+        String refreshToken = request.get("refreshToken");
+
+        String username = jwtService.extractUsername(refreshToken);
+        if (username == null || jwtService.isExpired(refreshToken)){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserEntity user = userRepo.findByUsername(username).orElseThrow();
+
+        String newAccessToken = jwtService.generateToken(user.getUsername());
+        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+
     }
 
 
