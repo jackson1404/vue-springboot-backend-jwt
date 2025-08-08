@@ -16,6 +16,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -39,7 +40,9 @@ public class LoginController {
                             request.getUsername(), request.getPassword()
                     )
             );
-            String accessToken = jwtService.generateToken(request.getUsername());
+            UserEntity user = userRepo.findByUsername(request.getUsername()).orElseThrow();
+
+            String accessToken = jwtService.generateToken(user.getUsername(), user.getRole());
             String refreshToken = jwtService.generateRefreshToken(request.getUsername());
 
             Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
@@ -71,7 +74,8 @@ public class LoginController {
 
 
         String username = jwtService.extractUsername(refreshToken);
-        String newAccessToken = jwtService.generateToken(username);
+        UserEntity user = userRepo.findByUsername(username).orElseThrow();
+        String newAccessToken = jwtService.generateToken(user.getUsername(), user.getRole());
 
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
