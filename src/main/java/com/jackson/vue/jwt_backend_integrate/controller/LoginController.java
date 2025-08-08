@@ -10,7 +10,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -58,6 +60,8 @@ public class LoginController {
     @PostMapping("/refreshNewToken")
     public ResponseEntity<?> getNewToken(HttpServletRequest request) throws Exception {
 
+        System.out.println("reach call refresh token");
+
         Cookie[] cookies = request.getCookies();
         String refreshToken = Arrays.stream(cookies)
                 .filter(c -> "refreshToken".equals(c.getName()))
@@ -71,6 +75,22 @@ public class LoginController {
 
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> processLogout( HttpServletResponse response){
+
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("Strict")
+                .maxAge(0)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+
+        return ResponseEntity.ok("Logout successfully");
     }
 
 
