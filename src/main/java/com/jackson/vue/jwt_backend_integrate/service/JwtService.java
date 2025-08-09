@@ -1,6 +1,7 @@
 package com.jackson.vue.jwt_backend_integrate.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -49,8 +50,8 @@ public class JwtService {
     }
 
     public String extractUserRole(String token){
-
-        return (String) parseClaim(token).get("role");
+        Object roleObj = parseClaim(token).get("role");
+        return roleObj == null ? null : roleObj.toString();
     }
 
     public String extractJti(String token){
@@ -60,6 +61,16 @@ public class JwtService {
     public boolean validate(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isExpired(token);
+    }
+
+    public boolean isValid(String token){
+        try {
+            parseClaim(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e){
+            return false;
+        }
+
     }
 
     public boolean isExpired(String token) {
