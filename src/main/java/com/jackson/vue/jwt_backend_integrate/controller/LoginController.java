@@ -41,18 +41,21 @@ public class LoginController {
                     )
             );
             UserEntity user = userRepo.findByUsername(request.getUsername()).orElseThrow();
-
+            System.out.println("User role " + user.getRole());
             String accessToken = jwtService.generateToken(user.getUsername(), user.getRole());
             String refreshToken = jwtService.generateRefreshToken(request.getUsername());
 
-            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-            refreshTokenCookie.setHttpOnly(true);
-            refreshTokenCookie.setPath("/");
-            refreshTokenCookie.setSecure(true);
-            refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+            ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .sameSite("None")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .build();
 
-            response.addCookie(refreshTokenCookie);
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
+            System.out.println("Access token " + accessToken);
             return ResponseEntity.ok(Map.of("accessToken", accessToken));
         } catch (Exception e) {
             System.out.println("Authentication failed: " + e.getMessage());
@@ -66,6 +69,10 @@ public class LoginController {
         System.out.println("reach call refresh token");
 
         Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            throw new Exception("No cookies found in request");
+        }
+
         String refreshToken = Arrays.stream(cookies)
                 .filter(c -> "refreshToken".equals(c.getName()))
                 .findFirst()
@@ -88,7 +95,7 @@ public class LoginController {
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .sameSite("Strict")
+                .sameSite("None")
                 .maxAge(0)
                 .build();
 

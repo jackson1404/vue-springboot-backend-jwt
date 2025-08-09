@@ -14,8 +14,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminController {
 
-    @GetMapping("/status")
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/status")
     public ResponseEntity<?> getStatus(){
         return ResponseEntity.ok(Map.of("status", "ok"));
     }

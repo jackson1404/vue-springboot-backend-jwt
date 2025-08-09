@@ -24,7 +24,7 @@ public class JwtService {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.MINUTES)))
-                .claim("roles", role)
+                .claim("role", role)
                 .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -54,7 +54,7 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
-                .get("roles");
+                .get("role");
     }
 
     public boolean validate(String token, UserDetails userDetails) {
