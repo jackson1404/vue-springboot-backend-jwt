@@ -1,6 +1,7 @@
 package com.jackson.vue.jwt_backend_integrate.config;
 
 import com.jackson.vue.jwt_backend_integrate.service.JwtService;
+import com.jackson.vue.jwt_backend_integrate.service.RedisTokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,11 +27,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final RedisTokenBlacklistService blacklistService;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        System.out.println("path" + path);
         return path.startsWith("/api/v1/auth");
     }
 
@@ -41,8 +42,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String username;
+        final String jwt = authHeader.substring(7);
+        final String username = jwtService.extractUsername(jwt);
 
         // No token or not a Bearer token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -50,8 +51,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        jwt = authHeader.substring(7); // remove "Bearer "
-        username = jwtService.extractUsername(jwt);
+        if (!jwtService.isValid(jwt)){
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        String jti = jwtService.extractJti(jwt);
+        if (jti != null && blacklistService.isBlacklist(jti)){
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
 
         // Check if user is not already authenticated
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
