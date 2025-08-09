@@ -1,5 +1,6 @@
 package com.jackson.vue.jwt_backend_integrate.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -19,8 +21,11 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    String jti = UUID.randomUUID().toString();
+
     public String generateToken(String username, String role) {
         return Jwts.builder()
+                .setId(jti)
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.MINUTES)))
@@ -31,6 +36,7 @@ public class JwtService {
 
     public String generateRefreshToken(String username){
         return Jwts.builder()
+                .setId(jti)
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
@@ -39,22 +45,16 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(jwtSecret.getBytes())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return parseClaim(token).getSubject();
     }
 
     public String extractUserRole(String token){
 
-        return (String) Jwts.parserBuilder()
-                .setSigningKey(jwtSecret.getBytes())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("role");
+        return (String) parseClaim(token).get("role");
+    }
+
+    public String extractJti(String token){
+        return parseClaim(token).getId();
     }
 
     public boolean validate(String token, UserDetails userDetails) {
@@ -70,5 +70,13 @@ public class JwtService {
                 .getBody()
                 .getExpiration();
         return expiration.before(new Date());
+    }
+
+    public Claims parseClaim(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(jwtSecret.getBytes())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }
