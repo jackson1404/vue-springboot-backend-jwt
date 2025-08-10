@@ -54,7 +54,7 @@ public class LoginController {
             ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
                     .httpOnly(true)
                     .secure(true)
-                    .path("/api/v1/auth/refreshNewToken")
+                    .path("/")
                     .sameSite("None")
                     .maxAge(7 * 24 * 60 * 60)
                     .build();
@@ -89,33 +89,38 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
 
-        //extract jwt id and check is that blacklist or not
-        String oldJti = jwtService.extractJti(refreshToken);
-        if (blacklistService.isBlacklist(oldJti)){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Refresh token revoked");
+        // Verify this is actually a refresh token
+        if (!jwtService.isRefreshToken(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token type");
         }
 
-        // rotate: blacklist the incoming refresh token
-        Instant oldExp = jwtService.extractExpirationTime(refreshToken).toInstant();
-        blacklistService.blacklist(oldJti, oldExp);
-
-        //issue new token
+        // Extract username and validate user exists
         String username = jwtService.extractUsername(refreshToken);
         UserEntity user = userRepo.findByUsername(username).orElseThrow();
 
+        // Generate new tokens
         String newAccessToken = jwtService.generateToken(user.getUsername(), user.getRole());
         String newRefreshToken = jwtService.generateRefreshToken(username);
-
-        //set new refresh cookie (rotation)
+        
+        System.out.println("Generated new tokens successfully");
+        System.out.println("New access token JTI: " + jwtService.extractJti(newAccessToken));
+        System.out.println("New refresh token JTI: " + jwtService.extractJti(newRefreshToken));
+        
+        // Set new refresh cookie (rotation)
         ResponseCookie newCookie = ResponseCookie.from("refreshToken", newRefreshToken)
                 .httpOnly(true)
                 .secure(true)
-                .path("/api/v1/auth/refreshNewToken")
-                .maxAge(Duration.ofDays(7))
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
                 .sameSite("None")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, newCookie.toString());
+        System.out.println("New refresh token cookie set successfully");
+
+        // Don't blacklist the refresh token during normal refresh operations
+        // Only blacklist during logout to prevent replay attacks
+        System.out.println("Token rotation completed successfully. Refresh token remains valid for future use.");
 
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
@@ -143,7 +148,7 @@ public class LoginController {
                     .findFirst()
                     .ifPresent(c -> {
                         String refresh = c.getValue();
-                        if (jwtService.isExpired(refresh)) {
+                        if (jwtService.isValid(refresh)) {
                             String cJti = jwtService.extractJti(refresh);
                             Instant cExp = jwtService.extractExpirationTime(refresh).toInstant();
                             blacklistService.blacklist(cJti, cExp);
@@ -164,6 +169,5 @@ public class LoginController {
         return ResponseEntity.ok("Logout successfully");
 
     }
-
 
 }

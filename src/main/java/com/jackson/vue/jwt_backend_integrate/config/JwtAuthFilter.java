@@ -32,6 +32,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
+        // Don't filter auth endpoints and refresh token endpoint
         return path.startsWith("/api/v1/auth");
     }
 
@@ -42,14 +43,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt = authHeader.substring(7);
-        final String username = jwtService.extractUsername(jwt);
 
         // No token or not a Bearer token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
+
+        final String jwt = authHeader.substring(7);
+        final String username = jwtService.extractUsername(jwt);
+
+
 
         if (!jwtService.isValid(jwt)){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

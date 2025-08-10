@@ -22,11 +22,9 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    String jti = UUID.randomUUID().toString();
-
     public String generateToken(String username, String role) {
         return Jwts.builder()
-                .setId(jti)
+                .setId(UUID.randomUUID().toString())
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.MINUTES)))
@@ -37,10 +35,11 @@ public class JwtService {
 
     public String generateRefreshToken(String username){
         return Jwts.builder()
-                .setId(jti)
+                .setId(UUID.randomUUID().toString())
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+                .claim("type", "refresh") // Add type claim to distinguish from access tokens
                 .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -52,6 +51,11 @@ public class JwtService {
     public String extractUserRole(String token){
         Object roleObj = parseClaim(token).get("role");
         return roleObj == null ? null : roleObj.toString();
+    }
+
+    public boolean isRefreshToken(String token){
+        Object typeObj = parseClaim(token).get("type");
+        return "refresh".equals(typeObj);
     }
 
     public String extractJti(String token){
