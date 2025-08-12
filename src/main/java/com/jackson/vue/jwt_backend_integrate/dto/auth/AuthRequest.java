@@ -1,4 +1,4 @@
-package com.jackson.vue.jwt_backend_integrate.dto;
+package com.jackson.vue.jwt_backend_integrate.dto.auth;
 
 import lombok.Data;
 

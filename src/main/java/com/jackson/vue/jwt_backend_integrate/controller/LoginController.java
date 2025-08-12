@@ -1,30 +1,24 @@
 package com.jackson.vue.jwt_backend_integrate.controller;
 
-import com.jackson.vue.jwt_backend_integrate.dto.AuthRequest;
-import com.jackson.vue.jwt_backend_integrate.dto.AuthResponse;
+import com.jackson.vue.jwt_backend_integrate.dto.auth.AuthRequest;
 import com.jackson.vue.jwt_backend_integrate.model.UserEntity;
 import com.jackson.vue.jwt_backend_integrate.repository.UserRepository;
 import com.jackson.vue.jwt_backend_integrate.service.JwtService;
 import com.jackson.vue.jwt_backend_integrate.service.RedisTokenBlacklistService;
-import io.jsonwebtoken.Jwt;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Map;
 
 @RestController
