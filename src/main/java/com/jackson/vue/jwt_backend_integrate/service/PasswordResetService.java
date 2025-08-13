@@ -33,6 +33,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final  EmailService emailService;
 
     public void createPasswordResetToken(String email) throws Exception {
 
@@ -47,6 +48,10 @@ public class PasswordResetService {
         passwordResetToken.setExpiryTime(LocalDateTime.now().plusMinutes(15));
 
         passwordResetTokenRepository.save(passwordResetToken);
+
+        String resetLink = "http://localhost:5173/reset-password?token=" + rawToken;
+        emailService.sendPasswordResetEmail(email, resetLink );
+
 
     }
 
