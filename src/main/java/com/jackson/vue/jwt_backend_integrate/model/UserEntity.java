@@ -1,10 +1,9 @@
 package com.jackson.vue.jwt_backend_integrate.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Table(name = "tbl_employees")
@@ -21,5 +20,8 @@ public class UserEntity {
     private String username;
     private String password;
     private String role;
+
+    @OneToMany(mappedBy = "user")
+    private List<PasswordResetTokenEntity> passwordResetTokenEntities;
 
 }
