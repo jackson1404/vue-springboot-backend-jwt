@@ -10,7 +10,13 @@
         </encoder>
     </appender>
 
+    <!-- Audit Logger -->
     <logger name="Audit-Logger" level="INFO" additivity="false">
         <appender-ref ref="AUDIT_FILE"/>
     </logger>
+
+    <!-- Root Logger to avoid "No appenders" warning -->
+    <root level="INFO">
+        <appender-ref ref="AUDIT_FILE"/>
+    </root>
 </configuration>
