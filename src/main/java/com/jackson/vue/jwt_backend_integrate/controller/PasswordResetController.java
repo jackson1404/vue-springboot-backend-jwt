@@ -29,12 +29,18 @@ public class PasswordResetController {
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String email) throws Exception {
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) throws Exception {
         passwordResetService.createPasswordResetToken(email);
         return ResponseEntity.ok("Password Reset Email Sent");
     }
 
-    
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String resetToken, @RequestParam String newPassword){
+        passwordResetService.createResetPassword(resetToken, newPassword);
+        return ResponseEntity.ok("Password Reset Successfully");
+    }
+
+
 
 
 }

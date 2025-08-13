@@ -50,4 +50,23 @@ public class PasswordResetService {
 
     }
 
+    public void createResetPassword(String resetToken, String newPassword) {
+
+        PasswordResetTokenEntity tokenEntity = passwordResetTokenRepository.findAll().stream()
+                    .filter(t -> passwordEncoder.matches(resetToken, t.getTokenHash()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+
+        if (tokenEntity.getUsed() || tokenEntity.getExpiryTime().isBefore(LocalDateTime.now())){
+            throw new IllegalStateException("Token Expired or already used");
+        }
+
+        UserEntity user = tokenEntity.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        tokenEntity.setUsed(true);
+        passwordResetTokenRepository.save(tokenEntity);
+
+    }
 }
