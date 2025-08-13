@@ -1,6 +1,9 @@
 <configuration>
+
+    <property name="LOG_DIR" value="logs"/>
+
     <appender name="AUDIT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/audit.log</file>
+        <file>${LOG_DIR}/audit.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/audit.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -10,13 +13,18 @@
         </encoder>
     </appender>
 
-    <!-- Audit Logger -->
-    <logger name="Audit-Logger" level="INFO" additivity="false">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%logger{5}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="AuditLog" level="INFO" additivity="false">
         <appender-ref ref="AUDIT_FILE"/>
     </logger>
 
-    <!-- Root Logger to avoid "No appenders" warning -->
     <root level="INFO">
-        <appender-ref ref="AUDIT_FILE"/>
+        <appender-ref ref="CONSOLE"/>
     </root>
+
 </configuration>
